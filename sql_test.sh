@@ -1,5 +1,14 @@
 #!/bin/bash
 
+HOSTNAME=localhost
+PORT=6379
+USER=root
+DATABASE="--all-databases"
+FILE=dump.sql
+PASSWORD=""
+METHOD=mysqldump
+
+
 function query_test(){
 QUERY=`mysql -u root --password=852456 <<EOF
 use dump_test;
@@ -11,7 +20,8 @@ echo $QUERY
 function default_command(){
      echo  -e "host =localhost\nport =6379\nuser =root\ndatabase =--all-databases\ndumo_path =dump.sql"
 }
-function make_backup(){
+
+function mysqldump_backup(){
    #     echo "$1"
   #      echo "$2"
 #echo "$3"
@@ -23,15 +33,32 @@ function make_backup(){
 }
 
 #make_backup localhost 6379 root 852456 dump_test dump_test2.sql
-HOSTNAME=localhost
-PORT=6379
-USER=root
-DATABASE="--all-databases"
-FILE=dump.sql
-PASSWORD=""
-while getopts "h:P:u:p:d:f:" arg
+
+function binlog_backup(){
+	echo "helloworld"
+}
+
+function echo_valid_method(){
+	echo "-m mysqldump || mysqlbinlog  default=mysqldump"
+}
+function do_backup(){
+     case $METHOD in
+         mysqldump)
+            mysqldump_backup $HOSTNAME $PORT $USER $PASSWORD $DATABASE $FILE;;
+         ?)
+            echo "unvalid method"
+            exit 1
+            ;;
+    esac
+    echo "================SUCCESSFULLY BACKUP================"
+    echo "DUMPFILE: "$FILE
+    echo `date`
+    echo "=====================##END##========================"
+ }
+
+while getopts "m:h:P:u:p:d:f:" arg
 do
- 	echo $OPTARG
+ #	echo $OPTARG
       case $arg in
          h)
               HOSTNAME=$OPTARG;;
@@ -45,6 +72,8 @@ do
 		DATABASE=$OPTARG;;
         f)
                 FILE=$OPTARG;;
+	m)
+               METHOD=$OPTARG;;
         ?)
                default_command
                exit 1
@@ -53,8 +82,7 @@ do
 done
 
 if [ ${#PASSWORD} -eq 0 ]; then
-   echo "-p must be setted s password"
+   echo "-p must be setted for password"
 else
-   make_backup $HOSTNAME $PORT $USER $PASSWORD $DATABASE $FILE
-
+   do_backup
 fi
